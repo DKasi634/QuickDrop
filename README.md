@@ -27,7 +27,7 @@ Never put `SERVICE_ROLE_KEY` in `.env` if it is read by browser builds. Set it o
 
 ## Supabase Setup
 
-1. Run `supabase/migrations/001_create_drops.sql` in the Supabase SQL editor.
+1. Apply the SQL migrations with `npx supabase db push`, or run the files in `supabase/migrations/` in order from the Supabase SQL editor.
 2. Log in and link the project, or pass `--project-ref` to every command:
 
 ```bash
@@ -35,9 +35,10 @@ npx supabase login
 npx supabase link --project-ref YOUR_PROJECT_REF
 ```
 
-3. Deploy both Edge Functions:
+3. Deploy the Edge Functions:
 
 ```bash
+npx supabase functions deploy create-drop --use-api
 npx supabase functions deploy consume-drop --use-api
 npx supabase functions deploy cleanup-drops --use-api
 ```
@@ -77,9 +78,9 @@ npm run check:functions
 
 ## Security Model
 
-- Anonymous clients can insert constrained drop metadata and upload image objects into the private bucket.
-- Anonymous clients cannot list, read, update, or delete drop rows.
-- Anonymous clients cannot read or delete storage objects directly.
+- Anonymous clients cannot directly insert, list, read, update, or delete drop rows.
+- Anonymous clients cannot directly upload, read, or delete storage objects.
+- The extension calls `create-drop`, which validates content and creates drops with service-role credentials.
 - The viewer calls `consume-drop`, which atomically opens a single drop by code and returns only that drop.
 - One-view drops are consumed in a database transaction, so concurrent opens cannot both pass the view-limit check.
 - Expired drops are removed by `cleanup-drops`; consumed one-view drops are blocked immediately and physically removed after a short grace window so the first viewer can finish loading image content.

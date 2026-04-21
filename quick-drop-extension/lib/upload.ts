@@ -1,6 +1,5 @@
-import { getSupabaseClient, VIEWER_BASE_URL } from './supabase';
-import { generateDropCode } from './link-generator';
-import type { DropPayload, DropResult, ExpiryOption } from './types';
+import { SUPABASE_ANON_KEY, SUPABASE_URL, VIEWER_BASE_URL } from './supabase';
+import type { DropPayload, DropResult } from './types';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_TEXT_CHARS = 20000;
@@ -12,80 +11,59 @@ const ALLOWED_IMAGE_TYPES = new Set([
   'image/webp',
 ]);
 
-function calculateExpiresAt(expiry: ExpiryOption): string {
-  const now = new Date();
-  switch (expiry) {
-    case '1h': now.setHours(now.getHours() + 1); break;
-    case '24h': now.setHours(now.getHours() + 24); break;
-    case '7d': now.setDate(now.getDate() + 7); break;
-    case '1view': now.setDate(now.getDate() + 30); break;
-  }
-  return now.toISOString();
-}
-
-function getViewLimit(expiry: ExpiryOption): number | null {
-  return expiry === '1view' ? 1 : null;
+interface CreateDropResponse {
+  drop?: {
+    id: string;
+    dropCode: string;
+    expiresAt: string;
+    viewLimit: number | null;
+  };
+  error?: string;
 }
 
 export async function uploadDrop(payload: DropPayload): Promise<DropResult> {
   validatePayload(payload);
 
-  const client = getSupabaseClient();
-  const dropCode = generateDropCode();
-  const expiresAt = calculateExpiresAt(payload.expiry);
-  const viewLimit = getViewLimit(payload.expiry);
+  const form = new FormData();
+  form.set('content_type', payload.contentType);
+  form.set('expiry', payload.expiry);
+  form.set('caption', payload.caption || '');
 
-  let filePath: string | null = null;
-
-  if (payload.contentType === 'image' && payload.imageBlob) {
-    const ext = getFileExtension(payload.fileName || 'image.png');
-    filePath = `drops/${dropCode}.${ext}`;
-
-    const { error: uploadError } = await client.storage
-      .from('quick-drops')
-      .upload(filePath, payload.imageBlob, {
-        contentType: payload.imageBlob.type || 'image/png',
-        cacheControl: '3600',
-        upsert: false,
-      });
-
-    if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
+  if (payload.contentType === 'text') {
+    form.set('text_content', payload.textContent?.trim() || '');
+  } else if (payload.imageBlob) {
+    form.set('image', payload.imageBlob, payload.fileName || 'quick-drop-image.png');
   }
 
-  const { error: insertError } = await client
-    .from('drops')
-    .insert({
-      drop_code: dropCode,
-      file_path: filePath,
-      content_type: payload.contentType,
-      text_content: payload.contentType === 'text' ? payload.textContent : null,
-      caption: payload.caption || null,
-      expires_at: expiresAt,
-      view_limit: viewLimit,
-    });
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/create-drop`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: form,
+  });
 
-  if (insertError) {
-    throw new Error(`Database insert failed: ${insertError.message}`);
+  const body = (await response.json().catch(() => ({}))) as CreateDropResponse;
+
+  if (!response.ok || !body.drop) {
+    throw new Error(body.error || `Drop creation failed (${response.status})`);
   }
 
   return {
-    id: dropCode,
-    dropCode,
-    shareUrl: `${VIEWER_BASE_URL}/drop/${dropCode}`,
-    expiresAt,
-    viewLimit: viewLimit ?? undefined,
+    id: body.drop.id,
+    dropCode: body.drop.dropCode,
+    shareUrl: `${VIEWER_BASE_URL}/drop/${body.drop.dropCode}`,
+    expiresAt: body.drop.expiresAt,
+    viewLimit: body.drop.viewLimit ?? undefined,
   };
 }
 
-function getFileExtension(filename: string): string {
-  const parts = filename.split('.');
-  const ext = parts.length > 1 ? parts.pop()!.toLowerCase() : 'png';
-  if (ext === 'jpg' || ext === 'jpeg') return ext;
-  if (ext === 'png' || ext === 'gif' || ext === 'webp') return ext;
-  return 'png';
-}
-
 function validatePayload(payload: DropPayload): void {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error('Supabase environment variables are missing.');
+  }
+
   if (payload.caption && payload.caption.length > MAX_CAPTION_CHARS) {
     throw new Error(`Captions must be ${MAX_CAPTION_CHARS} characters or less.`);
   }

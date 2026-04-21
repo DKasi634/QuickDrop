@@ -104,36 +104,15 @@ DROP POLICY IF EXISTS "anon_select_drops" ON public.drops;
 DROP POLICY IF EXISTS "anon_update_drops" ON public.drops;
 DROP POLICY IF EXISTS "anon_delete_drops" ON public.drops;
 
-CREATE POLICY "anon_insert_drops"
-  ON public.drops FOR INSERT
-  TO anon
-  WITH CHECK (
-    expires_at > now()
-    AND expires_at <= now() + interval '8 days'
-    AND (view_limit IS NULL OR view_limit = 1)
-    AND views_count = 0
-    AND created_at >= now() - interval '5 minutes'
-    AND created_at <= now() + interval '5 minutes'
-  );
-
--- No anonymous SELECT/UPDATE/DELETE policies on drops.
--- Recipients use the consume-drop Edge Function, which calls consume_drop()
--- with service-role credentials.
+-- No anonymous table policies on drops.
+-- Creation uses create-drop, and viewing uses consume-drop.
+-- Both Edge Functions use service-role credentials.
 
 DROP POLICY IF EXISTS "anon_upload_quick_drops" ON storage.objects;
 DROP POLICY IF EXISTS "anon_read_quick_drops" ON storage.objects;
 DROP POLICY IF EXISTS "anon_delete_quick_drops" ON storage.objects;
 
-CREATE POLICY "anon_upload_quick_drops"
-  ON storage.objects FOR INSERT
-  TO anon
-  WITH CHECK (
-    bucket_id = 'quick-drops'
-    AND owner IS NULL
-    AND name ~ '^drops/[a-z0-9]+(-[a-z0-9]+){1,3}\.[a-z0-9]{2,5}$'
-  );
-
--- No anonymous storage SELECT/DELETE. The Edge Functions use service role.
+-- No anonymous storage policies. The Edge Functions use service role.
 
 -- 4. Atomic drop consumption.
 -- Returns zero rows for missing, expired, or already-consumed drops.
@@ -202,6 +181,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.consume_drop(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.consume_drop(TEXT) TO service_role;
 
 -- Used by the cleanup Edge Function.
 CREATE OR REPLACE FUNCTION public.expired_drop_candidates(p_batch_size INTEGER DEFAULT 50)
@@ -227,6 +207,7 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.expired_drop_candidates(INTEGER) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.expired_drop_candidates(INTEGER) TO service_role;
 
 -- ============================================================
 -- pg_cron setup (run separately after enabling pg_cron and pg_net)
