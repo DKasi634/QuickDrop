@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Drop — Viewing Shared Content</title>
+  <meta name="description" content="View anonymously shared content via Quick Drop. Privacy-first, temporary sharing — no accounts needed." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+    <!-- Loading Skeleton -->
+    <div id="loading-state" class="viewer-container">
+      <div class="viewer-card">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-content"></div>
+        <div class="skeleton-footer"></div>
+      </div>
+    </div>
+
+    <!-- Main Content (hidden until loaded) -->
+    <div id="content-state" class="viewer-container hidden">
+      <div class="viewer-card" id="viewer-card">
+        <!-- Header -->
+        <div class="viewer-header">
+          <div class="viewer-logo">
+            <span class="viewer-logo-icon">🪂</span>
+            <span class="viewer-logo-text">Quick Drop</span>
+          </div>
+          <div class="viewer-countdown" id="viewer-countdown"></div>
+        </div>
+
+        <!-- Caption -->
+        <div id="viewer-caption" class="viewer-caption hidden"></div>
+
+        <!-- Content Area -->
+        <div id="content-area" class="viewer-content"></div>
+
+        <!-- Footer -->
+        <div class="viewer-footer">
+          <button id="btn-download" class="viewer-btn-download hidden">
+            <span>⬇️</span> Download
+          </button>
+          <div class="viewer-info">
+            <span id="viewer-type-badge" class="viewer-type-badge"></span>
+            <span class="viewer-privacy">🔒 Anonymous • No tracking</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Branding -->
+      <div class="viewer-branding">
+        <span class="viewer-branding-link">
+          Shared with <strong>Quick Drop Extension</strong>
+        </span>
+      </div>
+    </div>
+
+    <!-- Expired State -->
+    <div id="expired-state" class="viewer-container hidden">
+      <div class="viewer-card expired-card">
+        <div class="expired-icon" id="expired-icon">💨</div>
+        <h2 class="expired-title" id="expired-title">Poof! This drop vanished</h2>
+        <p class="expired-message" id="expired-message">
+          This content has expired and self-destructed. That's the magic of Quick Drop — nothing lasts forever! 🪄
+        </p>
+        <div class="expired-branding">
+          <span class="viewer-branding-link" id="expired-action">
+            Open the Quick Drop extension to create a drop.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Self-Destruct Overlay -->
+    <div id="self-destruct-overlay" class="self-destruct-overlay hidden">
+      <div class="self-destruct-content">
+        <div class="self-destruct-countdown" id="self-destruct-countdown">3</div>
+        <div class="self-destruct-text">Self-destructing...</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

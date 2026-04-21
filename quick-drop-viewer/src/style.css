@@ -1,0 +1,462 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Quick Drop Viewer — Styles
+   Mobile-first, dark mode, glassmorphism
+   ============================================================ */
+
+@theme {
+  --color-surface: #09090f;
+  --color-surface-card: #111118;
+  --color-surface-elevated: #1a1a26;
+  --color-border: #23233a;
+  --color-primary: #818cf8;
+  --color-primary-dim: #4f46e5;
+  --color-accent: #f472b6;
+  --color-success: #34d399;
+  --color-text: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-text-dim: #64748b;
+
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  font-family: var(--font-sans);
+  background: var(--color-surface);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* Subtle background pattern */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(244,114,182,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(52,211,153,0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 560px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ============================================================
+   Viewer Container & Card
+   ============================================================ */
+
+.viewer-container {
+  width: 100%;
+  animation: fadeInUp 0.5s ease;
+}
+
+.viewer-card {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(255,255,255,0.03) inset;
+  backdrop-filter: blur(20px);
+}
+
+/* ============================================================
+   Header
+   ============================================================ */
+
+.viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(180deg, rgba(99,102,241,0.06) 0%, transparent 100%);
+}
+
+.viewer-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.viewer-logo-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 0 8px rgba(99,102,241,0.5));
+}
+
+.viewer-logo-text {
+  font-size: 15px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+}
+
+.viewer-countdown {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--color-surface-elevated);
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+}
+
+.viewer-countdown.urgent {
+  color: #f87171;
+  border-color: rgba(248,113,113,0.3);
+  background: rgba(248,113,113,0.08);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================================
+   Caption
+   ============================================================ */
+
+.viewer-caption {
+  padding: 12px 20px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(99,102,241,0.03);
+}
+
+/* ============================================================
+   Content Area
+   ============================================================ */
+
+.viewer-content {
+  padding: 0;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewer-content img {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  display: block;
+}
+
+.viewer-text-content {
+  width: 100%;
+  padding: 24px 20px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+
+.viewer-footer {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-border);
+  background: linear-gradient(0deg, rgba(0,0,0,0.2) 0%, transparent 100%);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.viewer-btn-download {
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--color-primary-dim);
+  border-radius: 10px;
+  background: rgba(99,102,241,0.12);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.viewer-btn-download:hover {
+  background: var(--color-primary-dim);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+}
+
+.viewer-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+
+.viewer-type-badge {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.viewer-type-badge.type-image {
+  background: rgba(99,102,241,0.2);
+  color: var(--color-primary);
+}
+
+.viewer-type-badge.type-text {
+  background: rgba(244,114,182,0.2);
+  color: var(--color-accent);
+}
+
+.viewer-privacy {
+  color: var(--color-text-dim);
+}
+
+/* ============================================================
+   Branding
+   ============================================================ */
+
+.viewer-branding {
+  text-align: center;
+  padding: 20px;
+}
+
+.viewer-branding-link {
+  font-size: 12px;
+  color: var(--color-text-dim);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.viewer-branding-link:hover {
+  color: var(--color-primary);
+}
+
+.viewer-branding-link strong {
+  color: var(--color-text-muted);
+}
+
+/* ============================================================
+   Expired State
+   ============================================================ */
+
+.expired-card {
+  text-align: center;
+  padding: 48px 32px;
+}
+
+.expired-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: floatSlow 3s ease-in-out infinite;
+}
+
+.expired-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--color-text), var(--color-text-muted));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.expired-message {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text-dim);
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.expired-branding {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ============================================================
+   Self-Destruct Overlay
+   ============================================================ */
+
+.self-destruct-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(9,9,15,0.95);
+  backdrop-filter: blur(16px);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.self-destruct-content {
+  text-align: center;
+}
+
+.self-destruct-countdown {
+  font-size: 120px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: countdownPulse 1s ease-in-out infinite;
+  line-height: 1;
+}
+
+.self-destruct-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  margin-top: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   Skeleton Loading
+   ============================================================ */
+
+.skeleton-header,
+.skeleton-content,
+.skeleton-footer {
+  background: linear-gradient(90deg,
+    var(--color-surface-elevated) 25%,
+    rgba(255,255,255,0.04) 50%,
+    var(--color-surface-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.skeleton-header {
+  height: 56px;
+  border-radius: 20px 20px 0 0;
+}
+
+.skeleton-content {
+  height: 280px;
+  margin: 0;
+  border-radius: 0;
+}
+
+.skeleton-footer {
+  height: 52px;
+  border-radius: 0 0 20px 20px;
+}
+
+/* ============================================================
+   Keyframe Animations
+   ============================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes countdownPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes dissolve {
+  0% { opacity: 1; filter: blur(0); transform: scale(1); }
+  50% { opacity: 0.5; filter: blur(4px); transform: scale(0.98); }
+  100% { opacity: 0; filter: blur(12px); transform: scale(0.95); }
+}
+
+@keyframes burnAway {
+  0% { clip-path: inset(0 0 0 0); opacity: 1; }
+  100% { clip-path: inset(100% 0 0 0); opacity: 0; }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  body {
+    padding: 8px;
+    align-items: flex-start;
+    padding-top: 24px;
+  }
+
+  .viewer-card {
+    border-radius: 16px;
+  }
+
+  .expired-card {
+    padding: 36px 20px;
+  }
+
+  .expired-icon {
+    font-size: 48px;
+  }
+
+  .expired-title {
+    font-size: 18px;
+  }
+}

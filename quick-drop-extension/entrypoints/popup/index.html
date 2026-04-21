@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Drop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="header-logo">
+      <span class="icon">🪂</span>
+      <h1>Quick Drop</h1>
+    </div>
+    <div class="header-tabs">
+      <button class="tab-btn active" id="tab-drop" data-tab="drop">Drop</button>
+      <button class="tab-btn" id="tab-history" data-tab="history">History</button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main id="main-content">
+    <!-- Drop Zone (default view) -->
+    <section id="view-dropzone" class="drop-zone-container">
+      <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Drop zone: drag files, paste from clipboard, or click to browse">
+        <div class="drop-zone-icon">📦</div>
+        <div class="drop-zone-text">Drop it like it's hot</div>
+        <div class="drop-zone-hint">Drag an image or text • Paste from clipboard • Or browse</div>
+        <div class="drop-zone-actions">
+          <button id="btn-browse" type="button">📁 Browse</button>
+          <button id="btn-paste" type="button">📋 Paste</button>
+        </div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" class="sr-only" aria-label="Select image file" />
+    </section>
+
+    <!-- Preview Panel (shown after content is loaded) -->
+    <section id="view-preview" class="preview-panel hidden">
+      <div class="preview-card">
+        <!-- Image preview -->
+        <div id="preview-image-container" class="preview-image-container hidden">
+          <img id="preview-image" alt="Preview of content to share" />
+        </div>
+        <!-- Text preview -->
+        <div id="preview-text-container" class="preview-text-container hidden"></div>
+
+        <!-- Meta info -->
+        <div class="preview-meta">
+          <span id="preview-badge" class="badge"></span>
+          <span id="preview-size"></span>
+        </div>
+
+        <!-- Settings -->
+        <div class="preview-settings">
+          <div class="setting-row">
+            <span class="setting-label">Expires</span>
+            <div class="expiry-options" id="expiry-options">
+              <button class="expiry-btn" data-expiry="1h">1 hour</button>
+              <button class="expiry-btn active" data-expiry="24h">24 hrs</button>
+              <button class="expiry-btn" data-expiry="7d">7 days</button>
+              <button class="expiry-btn" data-expiry="1view">👁 1 view</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Caption</span>
+            <input type="text" class="caption-input" id="caption-input" placeholder="Add a note (optional)" maxlength="200" />
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="preview-actions">
+          <button class="btn-cancel" id="btn-cancel">Cancel</button>
+          <button class="btn-drop" id="btn-drop">🪂 Drop It!</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Share Result (shown after successful upload) -->
+    <section id="view-share" class="share-result hidden">
+      <!-- Populated by share-result.ts -->
+    </section>
+
+    <!-- History Panel -->
+    <section id="view-history" class="history-panel hidden">
+      <!-- Populated by history.ts -->
+    </section>
+  </main>
+
+  <!-- Upload Overlay -->
+  <div id="upload-overlay" class="upload-overlay hidden">
+    <div class="upload-rocket">🚀</div>
+    <div class="upload-text">Launching your drop...</div>
+    <div class="upload-progress">
+      <div class="upload-progress-bar"></div>
+    </div>
+  </div>
+
+  <!-- Error Toast -->
+  <div id="error-toast" class="error-toast hidden"></div>
+
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "supabase": "supabase",
+    "deno": "deno",
+    "check:functions": "deno check supabase/functions/consume-drop/index.ts && deno check supabase/functions/cleanup-drops/index.ts"
+  },
+  "devDependencies": {
+    "deno-bin": "^2.2.7",
+    "supabase": "^2.93.0"
+  }
+}

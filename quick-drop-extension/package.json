@@ -1,0 +1,29 @@
+{
+  "name": "quick-drop-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Anonymous Quick-Share Drops — Drag, paste, or right-click to share images and text via temporary anonymous links.",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "prepare": "wxt prepare",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "canvas-confetti": "^1.9.3",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/canvas-confetti": "^1.6.4",
+    "@types/qrcode": "^1.5.5",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.7.0",
+    "wxt": "^0.20.0"
+  }
+}
