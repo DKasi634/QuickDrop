@@ -11,6 +11,7 @@ export interface LocalDrop {
   caption?: string;
   createdAt: string;
   thumbnailDataUrl?: string;
+  creatorToken?: string;
 }
 
 export interface SupabaseDrop {
@@ -41,6 +42,7 @@ export interface DropResult {
   shareUrl: string;
   expiresAt: string;
   viewLimit?: number;
+  creatorToken?: string;
 }
 
 export type ExtensionMessage =

@@ -1,5 +1,6 @@
 import type { AppController } from './app';
 import { getDropHistory, clearHistory, removeDrop } from '../../lib/storage';
+import { deleteRemoteDrop } from '../../lib/remote-drops';
 
 export function initHistory(app: AppController): void {
   const historyView = document.getElementById('view-history')!;
@@ -43,6 +44,7 @@ export function initHistory(app: AppController): void {
           </div>
           <div class="history-actions">
             ${!isExpired ? `<button class="history-btn btn-history-copy" data-url="${escapeHtml(drop.shareUrl)}" title="Copy link">📋</button>` : ''}
+            ${drop.creatorToken ? `<button class="history-btn btn-history-delete-remote" data-id="${drop.id}" title="Delete drop now">🗑</button>` : ''}
             <button class="history-btn btn-history-remove" data-id="${drop.id}" title="Remove">✕</button>
           </div>
         </div>
@@ -93,6 +95,42 @@ export function initHistory(app: AppController): void {
           } else {
             renderHistory();
           }
+        }
+      });
+    });
+
+    historyView.querySelectorAll('.btn-history-delete-remote').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = (btn as HTMLElement).dataset.id;
+        if (!id) return;
+
+        const drops = await getDropHistory();
+        const drop = drops.find((item) => item.id === id);
+        if (!drop?.creatorToken) {
+          app.showError('Missing creator token for this drop.');
+          return;
+        }
+
+        if (!confirm('Delete this drop for everyone now?')) return;
+
+        (btn as HTMLButtonElement).disabled = true;
+
+        try {
+          await deleteRemoteDrop(drop.dropCode, drop.creatorToken);
+          await removeDrop(id);
+          const item = (btn as HTMLElement).closest('.history-item') as HTMLElement;
+          if (item) {
+            item.style.transition = 'all 0.3s ease';
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(50px)';
+            setTimeout(() => renderHistory(), 350);
+          } else {
+            renderHistory();
+          }
+        } catch (err) {
+          (btn as HTMLButtonElement).disabled = false;
+          app.showError(err instanceof Error ? err.message : 'Delete failed.');
         }
       });
     });

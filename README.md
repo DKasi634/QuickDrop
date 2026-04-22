@@ -40,6 +40,7 @@ npx supabase link --project-ref YOUR_PROJECT_REF
 ```bash
 npx supabase functions deploy create-drop --use-api
 npx supabase functions deploy consume-drop --use-api
+npx supabase functions deploy delete-drop --use-api
 npx supabase functions deploy cleanup-drops --use-api
 ```
 
@@ -82,5 +83,7 @@ npm run check:functions
 - Anonymous clients cannot directly upload, read, or delete storage objects.
 - The extension calls `create-drop`, which validates content and creates drops with service-role credentials.
 - The viewer calls `consume-drop`, which atomically opens a single drop by code and returns only that drop.
+- `create-drop` returns a one-time creator token stored only in local browser history.
+- The extension uses that creator token to call `delete-drop` when deleting a live drop from history.
 - One-view drops are consumed in a database transaction, so concurrent opens cannot both pass the view-limit check.
 - Expired drops are removed by `cleanup-drops`; consumed one-view drops are blocked immediately and physically removed after a short grace window so the first viewer can finish loading image content.

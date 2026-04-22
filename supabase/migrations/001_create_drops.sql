@@ -16,12 +16,14 @@ CREATE TABLE IF NOT EXISTS public.drops (
   expires_at TIMESTAMPTZ NOT NULL,
   view_limit INTEGER,
   views_count INTEGER DEFAULT 0 NOT NULL,
+  creator_token_hash TEXT,
   consumed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
 ALTER TABLE public.drops
-  ADD COLUMN IF NOT EXISTS consumed_at TIMESTAMPTZ;
+  ADD COLUMN IF NOT EXISTS consumed_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS creator_token_hash TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_drops_drop_code ON public.drops(drop_code);
 CREATE INDEX IF NOT EXISTS idx_drops_expires_at ON public.drops(expires_at);
@@ -66,6 +68,17 @@ BEGIN
     ALTER TABLE public.drops
       ADD CONSTRAINT drops_views_count_nonnegative
       CHECK (views_count >= 0);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'drops_creator_token_hash_shape'
+  ) THEN
+    ALTER TABLE public.drops
+      ADD CONSTRAINT drops_creator_token_hash_shape
+      CHECK (
+        creator_token_hash IS NULL
+        OR creator_token_hash ~ '^[a-f0-9]{64}$'
+      );
   END IF;
 
   IF NOT EXISTS (

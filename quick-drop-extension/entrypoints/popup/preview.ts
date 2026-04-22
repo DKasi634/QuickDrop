@@ -67,6 +67,7 @@ export function initPreview(app: AppController): void {
         caption: app.getCaption() || undefined,
         createdAt: new Date().toISOString(),
         thumbnailDataUrl,
+        creatorToken: result.creatorToken,
       });
 
       app.setUploading(false);

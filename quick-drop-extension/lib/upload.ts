@@ -15,6 +15,7 @@ interface CreateDropResponse {
   drop?: {
     id: string;
     dropCode: string;
+    creatorToken: string;
     expiresAt: string;
     viewLimit: number | null;
   };
@@ -56,6 +57,7 @@ export async function uploadDrop(payload: DropPayload): Promise<DropResult> {
     shareUrl: `${VIEWER_BASE_URL}/drop/${body.drop.dropCode}`,
     expiresAt: body.drop.expiresAt,
     viewLimit: body.drop.viewLimit ?? undefined,
+    creatorToken: body.drop.creatorToken,
   };
 }
 

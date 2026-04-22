@@ -120,6 +120,8 @@ function validatePayload(payload: CreatePayload): string | null {
 async function createDrop(payload: CreatePayload) {
   for (let attempt = 0; attempt < 8; attempt++) {
     const dropCode = generateDropCode();
+    const creatorToken = generateCreatorToken();
+    const creatorTokenHash = await sha256Hex(creatorToken);
     const expiresAt = calculateExpiresAt(payload.expiry);
     const viewLimit = payload.expiry === '1view' ? 1 : null;
     const filePath = await uploadImageIfNeeded(payload, dropCode);
@@ -134,6 +136,7 @@ async function createDrop(payload: CreatePayload) {
         caption: payload.caption,
         expires_at: expiresAt,
         view_limit: viewLimit,
+        creator_token_hash: creatorTokenHash,
       })
       .select('id')
       .single();
@@ -142,6 +145,7 @@ async function createDrop(payload: CreatePayload) {
       return {
         id: data.id,
         dropCode,
+        creatorToken,
         expiresAt,
         viewLimit,
       };
@@ -242,6 +246,29 @@ function generateDropCode(): string {
   const noun = NOUNS[randomIndex(NOUNS.length)];
   const num = randomInt(10, 99);
   return `${adj}-${noun}-${num}`;
+}
+
+function generateCreatorToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return base64UrlEncode(bytes);
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function base64UrlEncode(bytes: Uint8Array): string {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
 }
 
 function randomIndex(length: number): number {
