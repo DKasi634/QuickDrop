@@ -722,6 +722,12 @@ html, body {
   border-color: var(--color-primary);
 }
 
+.btn-history-delete-remote:hover {
+  color: var(--color-danger);
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.08);
+}
+
 .history-header {
   display: flex;
   align-items: center;

@@ -44,8 +44,8 @@ export function initHistory(app: AppController): void {
           </div>
           <div class="history-actions">
             ${!isExpired ? `<button class="history-btn btn-history-copy" data-url="${escapeHtml(drop.shareUrl)}" title="Copy link">📋</button>` : ''}
-            ${drop.creatorToken ? `<button class="history-btn btn-history-delete-remote" data-id="${drop.id}" title="Delete drop now">🗑</button>` : ''}
-            <button class="history-btn btn-history-remove" data-id="${drop.id}" title="Remove">✕</button>
+            ${drop.creatorToken ? `<button class="history-btn btn-history-delete-remote" data-id="${drop.id}" title="Delete for everyone">🗑</button>` : ''}
+            <button class="history-btn btn-history-remove" data-id="${drop.id}" title="Hide from history only">✕</button>
           </div>
         </div>
       `;
