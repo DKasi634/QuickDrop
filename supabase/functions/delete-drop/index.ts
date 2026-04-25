@@ -4,24 +4,11 @@
 // creator token stored only in browser-local history.
 // ============================================================
 
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { constantTimeEqual, sha256Hex } from '../_shared/crypto.ts';
+import { json, optionsResponse } from '../_shared/cors.ts';
+import { createSupabaseAdmin } from '../_shared/supabase-admin.ts';
 
-const supabaseAdmin = createClient(
-  Deno.env.get('PROJECT_SUPABASE_URL') || Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SERVICE_ROLE_KEY')!,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  }
-);
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+const supabaseAdmin = createSupabaseAdmin();
 
 interface DeleteRequest {
   dropCode?: string;
@@ -36,7 +23,7 @@ interface DropRow {
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return optionsResponse('POST, OPTIONS');
   }
 
   if (req.method !== 'POST') {
@@ -73,7 +60,10 @@ Deno.serve(async (req: Request) => {
       return json({ deleted: true, alreadyGone: true });
     }
 
-    if (!dropRow.creator_token_hash || dropRow.creator_token_hash !== creatorTokenHash) {
+    if (
+      !dropRow.creator_token_hash ||
+      !constantTimeEqual(dropRow.creator_token_hash, creatorTokenHash)
+    ) {
       return json({ error: 'Not allowed to delete this drop' }, 403);
     }
 
@@ -103,22 +93,3 @@ Deno.serve(async (req: Request) => {
     return json({ error: 'Unexpected error' }, 500);
   }
 });
-
-async function sha256Hex(value: string): Promise<string> {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-    },
-  });
-}

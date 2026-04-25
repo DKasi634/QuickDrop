@@ -4,28 +4,18 @@
 // and uploads image content into the private quick-drops bucket.
 // ============================================================
 
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { base64UrlEncode, sha256Hex } from '../_shared/crypto.ts';
+import { json, optionsResponse } from '../_shared/cors.ts';
+import { checkRateLimit, getRateLimitKey } from '../_shared/rate-limit.ts';
+import { createSupabaseAdmin } from '../_shared/supabase-admin.ts';
 
-const supabaseAdmin = createClient(
-  Deno.env.get('PROJECT_SUPABASE_URL') || Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SERVICE_ROLE_KEY')!,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  }
-);
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+const supabaseAdmin = createSupabaseAdmin();
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_TEXT_CHARS = 20000;
 const MAX_CAPTION_CHARS = 200;
+const CREATE_LIMIT = 30;
+const CREATE_LIMIT_WINDOW_SECONDS = 60 * 60;
 const ALLOWED_IMAGE_TYPES = new Map([
   ['image/png', 'png'],
   ['image/jpeg', 'jpg'],
@@ -46,7 +36,7 @@ interface CreatePayload {
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return optionsResponse('POST, OPTIONS');
   }
 
   if (req.method !== 'POST') {
@@ -54,8 +44,19 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const rateKey = await getRateLimitKey(req, 'create-drop');
+    const allowed = await checkRateLimit(
+      supabaseAdmin,
+      rateKey,
+      CREATE_LIMIT,
+      CREATE_LIMIT_WINDOW_SECONDS
+    );
+    if (!allowed) {
+      return json({ error: 'Too many drops. Try again in a little while.' }, 429);
+    }
+
     const payload = await parsePayload(req);
-    const validationError = validatePayload(payload);
+    const validationError = await validatePayload(payload);
     if (validationError) return json({ error: validationError }, 400);
 
     const result = await createDrop(payload);
@@ -85,7 +86,7 @@ async function parsePayload(req: Request): Promise<CreatePayload> {
   };
 }
 
-function validatePayload(payload: CreatePayload): string | null {
+async function validatePayload(payload: CreatePayload): Promise<string | null> {
   if (payload.contentType !== 'image' && payload.contentType !== 'text') {
     return 'Unsupported drop type.';
   }
@@ -113,8 +114,42 @@ function validatePayload(payload: CreatePayload): string | null {
   if (payload.imageFile.size > MAX_IMAGE_BYTES) {
     return 'Images must be 10 MB or smaller.';
   }
+  if (!(await hasExpectedImageSignature(payload.imageFile))) {
+    return 'Image contents do not match PNG, JPG, GIF, or WebP.';
+  }
 
   return null;
+}
+
+async function hasExpectedImageSignature(file: File): Promise<boolean> {
+  const bytes = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+
+  if (file.type === 'image/png') {
+    return startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  }
+
+  if (file.type === 'image/jpeg') {
+    return startsWith(bytes, [0xff, 0xd8, 0xff]);
+  }
+
+  if (file.type === 'image/gif') {
+    return startsWith(bytes, [0x47, 0x49, 0x46, 0x38, 0x37, 0x61]) ||
+      startsWith(bytes, [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]);
+  }
+
+  if (file.type === 'image/webp') {
+    return startsWith(bytes, [0x52, 0x49, 0x46, 0x46]) &&
+      bytes[8] === 0x57 &&
+      bytes[9] === 0x45 &&
+      bytes[10] === 0x42 &&
+      bytes[11] === 0x50;
+  }
+
+  return false;
+}
+
+function startsWith(bytes: Uint8Array, signature: number[]): boolean {
+  return signature.every((byte, index) => bytes[index] === byte);
 }
 
 async function createDrop(payload: CreatePayload) {
@@ -254,23 +289,6 @@ function generateCreatorToken(): string {
   return base64UrlEncode(bytes);
 }
 
-async function sha256Hex(value: string): Promise<string> {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-function base64UrlEncode(bytes: Uint8Array): string {
-  let binary = '';
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
-}
-
 function randomIndex(length: number): number {
   return randomInt(0, length - 1);
 }
@@ -280,15 +298,4 @@ function randomInt(min: number, max: number): number {
   const bytes = new Uint32Array(1);
   crypto.getRandomValues(bytes);
   return min + (bytes[0] % range);
-}
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-    },
-  });
 }

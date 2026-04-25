@@ -14,6 +14,7 @@ quick-drop-viewer/dist/
 quick-drop-viewer/.vite/
 supabase/.temp/
 
+.codex
 .DS_Store
 *.log
 npm-debug.log*

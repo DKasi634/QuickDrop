@@ -4,18 +4,10 @@
 // Triggered by pg_cron every 15 minutes.
 // ============================================================
 
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { json } from '../_shared/cors.ts';
+import { createSupabaseAdmin } from '../_shared/supabase-admin.ts';
 
-const supabaseAdmin = createClient(
-  Deno.env.get('PROJECT_SUPABASE_URL') || Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SERVICE_ROLE_KEY')!,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  }
-);
+const supabaseAdmin = createSupabaseAdmin();
 
 const BATCH_SIZE = 50;
 
@@ -28,16 +20,11 @@ Deno.serve(async (_req: Request) => {
 
     if (expiredError) {
       console.error('Error fetching expired drops:', expiredError);
-      return new Response(JSON.stringify({ error: expiredError.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ error: expiredError.message }, 500);
     }
 
     if (!allExpired || allExpired.length === 0) {
-      return new Response(JSON.stringify({ deleted: 0, message: 'No expired drops found' }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ deleted: 0, message: 'No expired drops found' });
     }
 
     let deletedCount = 0;
@@ -70,19 +57,13 @@ Deno.serve(async (_req: Request) => {
 
     console.log(`Cleanup complete: deleted ${deletedCount} of ${allExpired.length} expired drops`);
 
-    return new Response(
-      JSON.stringify({
-        deleted: deletedCount,
-        total_found: allExpired.length,
-        timestamp: now,
-      }),
-      { headers: { 'Content-Type': 'application/json' } }
-    );
+    return json({
+      deleted: deletedCount,
+      total_found: allExpired.length,
+      timestamp: now,
+    });
   } catch (err) {
     console.error('Cleanup function error:', err);
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return json({ error: String(err) }, 500);
   }
 });

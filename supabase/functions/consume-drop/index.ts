@@ -3,24 +3,10 @@
 // Atomically opens a drop by code and returns only that drop.
 // ============================================================
 
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { json, optionsResponse } from '../_shared/cors.ts';
+import { createSupabaseAdmin } from '../_shared/supabase-admin.ts';
 
-const supabaseAdmin = createClient(
-  Deno.env.get('PROJECT_SUPABASE_URL') || Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SERVICE_ROLE_KEY')!,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  }
-);
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-};
+const supabaseAdmin = createSupabaseAdmin();
 
 interface ConsumedDrop {
   id: string;
@@ -37,7 +23,7 @@ interface ConsumedDrop {
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return optionsResponse();
   }
 
   try {
@@ -115,15 +101,4 @@ async function getDropCode(req: Request): Promise<string | null> {
   }
 
   return null;
-}
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-    },
-  });
 }
